@@ -1,0 +1,57 @@
+<main>
+  <h1>AskWarehouse</h1>
+  <p class="sub">
+    Ask your database in plain English — get the answer, a chart, and the <em>exact SQL</em> it ran.
+    Read-only and guarded; it refuses ambiguous questions instead of guessing.
+  </p>
+
+  <form (submit)="submit(); $event.preventDefault()">
+    <input [(ngModel)]="question" name="q" placeholder="e.g. total paid revenue by customer" autocomplete="off" />
+    <button type="submit">Ask</button>
+  </form>
+
+  @if (state$ | async; as s) {
+    @if (s.loading) {
+      <p class="muted">Running…</p>
+    } @else if (s.error) {
+      <p class="err">Request failed: {{ s.error }}</p>
+    } @else if (s.result; as r) {
+      @if (!r.answered) {
+        <div class="card refuse">
+          <strong>{{ r.refused === 'ambiguous' ? 'Needs clarification' : 'Could not answer' }}</strong>
+          <p>{{ r.message }}</p>
+        </div>
+      } @else if (r.result; as res) {
+        @if (chart(r).length) {
+          <div class="card chart">
+            @for (d of chart(r); track d.label) {
+              <div class="bar-row">
+                <span class="bar-label" title="{{ d.label }}">{{ d.label }}</span>
+                <span class="bar" [style.width.%]="d.pct"></span>
+                <span class="bar-val">{{ d.value }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="card">
+          <table>
+            <thead>
+              <tr>@for (c of res.columns; track c) { <th>{{ c }}</th> }</tr>
+            </thead>
+            <tbody>
+              @for (row of res.rows; track $index) {
+                <tr>@for (cell of row; track $index) { <td>{{ cell }}</td> }</tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title">SQL that ran</div>
+          <pre>{{ r.sql }}</pre>
+        </div>
+      }
+    }
+  }
+</main>

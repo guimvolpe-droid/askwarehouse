@@ -1,0 +1,24 @@
+{
+  "name": "askwarehouse",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Natural-language analytics: ask your database in plain English and get the answer, a chart, and the exact SQL — read-only, guarded, no hallucinated data.",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "hono": "^4.12.27"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "@types/sql.js": "^1.4.11",
+    "sql.js": "^1.14.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9",
+    "wrangler": "^4.107.0"
+  }
+}

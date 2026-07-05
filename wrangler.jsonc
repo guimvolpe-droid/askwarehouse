@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "askwarehouse",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-07-01",
+  "observability": { "enabled": true },
+  // D1 (SQLite) — create and seed with:
+  //   wrangler d1 create askwarehouse           (paste the id below)
+  //   wrangler d1 execute askwarehouse --file=demo/seed.sql --remote
+  "d1_databases": [
+    { "binding": "DB", "database_name": "askwarehouse", "database_id": "REPLACE_WITH_D1_ID" }
+  ]
+  // ANTHROPIC_API_KEY is a secret: wrangler secret put ANTHROPIC_API_KEY
+}

@@ -3,17 +3,19 @@ import { AsyncPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subject, of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
-import { ApiService, AskResult } from './api.service';
+import { ApiService, AskResult, Turn } from './api.service';
 import { buildChart, type ChartModel } from './chart';
 
-interface ViewState {
-  loading: boolean;
-  result?: AskResult;
-  error?: string;
+interface TurnView {
+  question: string;
+  result: AskResult;
   chart: ChartModel;
 }
 
-const NO_CHART: ChartModel = { kind: 'none' };
+interface ViewState {
+  loading: boolean;
+  error?: string;
+}
 
 @Component({
   selector: 'app-root',
@@ -24,28 +26,33 @@ const NO_CHART: ChartModel = { kind: 'none' };
 export class App {
   question = '';
 
+  // The conversation: one card-stack per turn. Answered turns feed the next question's
+  // history as {question, sql} pairs — the Worker stays stateless.
+  turns: TurnView[] = [];
+
   private readonly ask$ = new Subject<string>();
 
   // RxJS: each submitted question maps to an HTTP call, surfaced as a loading -> result/error
-  // stream. The chart model is picked by result shape (stat/line/bar/none) as the result lands.
+  // stream; the resolved turn is appended to the conversation as it lands.
   readonly state$: Observable<ViewState> = this.ask$.pipe(
     switchMap((q) =>
-      this.api.ask(q).pipe(
-        map(
-          (result): ViewState => ({
-            loading: false,
-            result,
-            chart: result.answered && result.result ? buildChart(result.result) : NO_CHART,
-          }),
-        ),
-        catchError(
-          (e): Observable<ViewState> =>
-            of({ loading: false, error: String(e?.message ?? e), chart: NO_CHART }),
-        ),
-        startWith<ViewState>({ loading: true, chart: NO_CHART }),
+      this.api.ask(q, this.history()).pipe(
+        map((result): ViewState => {
+          this.turns = [
+            ...this.turns,
+            {
+              question: q,
+              result,
+              chart: result.answered && result.result ? buildChart(result.result) : { kind: 'none' },
+            },
+          ];
+          return { loading: false };
+        }),
+        catchError((e): Observable<ViewState> => of({ loading: false, error: String(e?.message ?? e) })),
+        startWith<ViewState>({ loading: true }),
       ),
     ),
-    startWith<ViewState>({ loading: false, chart: NO_CHART }),
+    startWith<ViewState>({ loading: false }),
   );
 
   constructor(private readonly api: ApiService) {}
@@ -53,5 +60,16 @@ export class App {
   submit(): void {
     const q = this.question.trim();
     if (q) this.ask$.next(q);
+    this.question = '';
+  }
+
+  newConversation(): void {
+    this.turns = [];
+  }
+
+  private history(): Turn[] {
+    return this.turns
+      .filter((t) => t.result.answered && t.result.sql)
+      .map((t) => ({ question: t.question, sql: t.result.sql! }));
   }
 }

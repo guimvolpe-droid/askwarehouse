@@ -1,5 +1,5 @@
 import initSqlJs, { type Database } from "sql.js";
-import type { QueryResult, SqlExecutor, SqlModel } from "../core/types";
+import type { ProposeInput, QueryResult, SqlExecutor, SqlModel } from "../core/types";
 
 // Local read-only SQLite sandbox (sql.js / WASM). Lets us run real queries in tests and dev
 // without a Cloudflare account. Production uses D1 (also SQLite) via the Cloudflare provider.
@@ -33,8 +33,8 @@ export class ScriptedSqlModel implements SqlModel {
 }
 
 export class FnSqlModel implements SqlModel {
-  constructor(private readonly fn: (input: { schema: string; question: string; priorError?: string }) => string) {}
-  async propose(input: { schema: string; question: string; priorError?: string }): Promise<string> {
+  constructor(private readonly fn: (input: ProposeInput) => string) {}
+  async propose(input: ProposeInput): Promise<string> {
     return this.fn(input);
   }
 }

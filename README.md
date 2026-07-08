@@ -45,8 +45,8 @@ Honest, incremental build. What runs today vs. what's next:
 | Worker (Hono): `POST /ask`, `GET /schema`, CORS | ✅ builds (`wrangler --dry-run`) |
 | Angular + RxJS dashboard — answer + chart + the exact SQL (`web/`) | ✅ builds (AOT) |
 | Chart by result shape — stat tile · line (time series) · bars · table-only | ✅ unit-tested (pure model) |
+| Multi-turn refinement — client-carried `{question, sql}` history, guard re-vets every turn | ✅ tested ([ADR 0002](docs/adr/0002-stateless-multiturn.md)) |
 | Live deploy (D1 + Claude Sonnet) + Loom | 🔜 next¹ |
-| Multi-turn query refinement | 🔜 next |
 
 ¹ Deploy needs a Cloudflare account + `ANTHROPIC_API_KEY` (the owner's budget gate). Demos use a synthetic
 warehouse; the eval reports where it errs — anti-hype.

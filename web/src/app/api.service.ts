@@ -17,6 +17,12 @@ export interface AskResult {
   message?: string;
 }
 
+// One answered turn, sent back as follow-up context (the Worker is stateless).
+export interface Turn {
+  question: string;
+  sql: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   // Point at the deployed Worker, or `wrangler dev` (localhost:8787). Override at runtime via
@@ -26,7 +32,7 @@ export class ApiService {
 
   constructor(private readonly http: HttpClient) {}
 
-  ask(question: string): Observable<AskResult> {
-    return this.http.post<AskResult>(`${this.base}/ask`, { question });
+  ask(question: string, history: Turn[] = []): Observable<AskResult> {
+    return this.http.post<AskResult>(`${this.base}/ask`, { question, history });
   }
 }

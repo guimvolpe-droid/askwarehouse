@@ -45,6 +45,27 @@ button {
 .muted { color: #888; }
 .err { color: #b00020; }
 
+button.secondary {
+  background: #fff;
+  color: #111;
+  border: 1px solid #ccc;
+}
+
+.turn {
+  margin: 20px 0;
+}
+
+.turn-q {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.turn + .turn {
+  border-top: 1px solid #eee;
+  padding-top: 16px;
+}
+
 .card {
   border: 1px solid #e6e6e6;
   border-radius: 12px;

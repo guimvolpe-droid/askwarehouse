@@ -1,5 +1,5 @@
 import { AMBIGUOUS_PREFIX } from "../core/texttosql";
-import type { QueryResult, SqlExecutor, SqlModel } from "../core/types";
+import type { ProposeInput, QueryResult, SqlExecutor, SqlModel } from "../core/types";
 
 // Production providers. Not exercised by the offline test suite; verified at deploy (needs a
 // Cloudflare account = the owner's budget gate). The guard + loop are identical either way.
@@ -19,6 +19,7 @@ export class D1Executor implements SqlExecutor {
 const SQL_SYSTEM = [
   "You translate a question into a single read-only SQLite SELECT query over the given schema.",
   "Use ONLY the tables and columns in the schema. Return ONLY the SQL — no prose, no code fences.",
+  "When previous turns are given, interpret the question as a follow-up in their context (e.g. refine or narrow the previous SQL).",
   `If the question is ambiguous or cannot be answered from the schema, reply with one line: "${AMBIGUOUS_PREFIX} <what needs clarifying>".`,
   "Never write to the database.",
 ].join(" ");
@@ -31,9 +32,13 @@ export class ClaudeSqlModel implements SqlModel {
     private readonly baseUrl = "https://api.anthropic.com",
   ) {}
 
-  async propose(input: { schema: string; question: string; priorError?: string }): Promise<string> {
+  async propose(input: ProposeInput): Promise<string> {
+    const historyBlock = input.history?.length
+      ? `\n\nPrevious turns (question → SQL that ran):\n` +
+        input.history.map((t) => `Q: ${t.question}\nSQL: ${t.sql}`).join("\n")
+      : "";
     const user =
-      `Schema:\n${input.schema}\n\nQuestion: ${input.question}` +
+      `Schema:\n${input.schema}${historyBlock}\n\nQuestion: ${input.question}` +
       (input.priorError ? `\n\nYour previous attempt failed: ${input.priorError}\nReturn a corrected query.` : "");
 
     const res = await fetch(`${this.baseUrl}/v1/messages`, {

@@ -1,5 +1,5 @@
 import { DEFAULT_POLICY, guardSql, type GuardPolicy } from "./guard";
-import type { QueryResult, SqlExecutor, SqlModel } from "./types";
+import type { QueryResult, SqlExecutor, SqlModel, Turn } from "./types";
 
 export const AMBIGUOUS_PREFIX = "AMBIGUOUS:";
 
@@ -28,16 +28,26 @@ export interface TextToSqlResult {
 // Two-tool loop: the model proposes SQL, the guard vets it, the sandbox runs it. On a policy
 // rejection or an execution error the loop feeds the reason back and retries (bounded). The model
 // may also decline with an AMBIGUOUS: line rather than guess — refusing beats a wrong answer.
+// `history` (previous {question, sql} turns) lets follow-ups refine earlier queries; the guard
+// still vets every proposed statement of every turn — context never bypasses policy.
 export async function ask(
   question: string,
   deps: TextToSqlDeps,
   opts: TextToSqlOptions = DEFAULT_T2S,
+  history: Turn[] = [],
 ): Promise<TextToSqlResult> {
   const policy = deps.policy ?? DEFAULT_POLICY;
   let priorError: string | undefined;
 
   for (let attempt = 1; attempt <= opts.maxAttempts; attempt++) {
-    const raw = (await deps.model.propose({ schema: deps.schema, question, priorError })).trim();
+    const raw = (
+      await deps.model.propose({
+        schema: deps.schema,
+        question,
+        priorError,
+        history: history.length > 0 ? history : undefined,
+      })
+    ).trim();
 
     if (raw.toUpperCase().startsWith(AMBIGUOUS_PREFIX)) {
       return { answered: false, attempts: attempt, refused: "ambiguous", message: raw.slice(AMBIGUOUS_PREFIX.length).trim() };

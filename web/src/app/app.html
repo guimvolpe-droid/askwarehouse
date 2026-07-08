@@ -2,47 +2,54 @@
   <h1>AskWarehouse</h1>
   <p class="sub">
     Ask your database in plain English — get the answer, a chart, and the <em>exact SQL</em> it ran.
-    Read-only and guarded; it refuses ambiguous questions instead of guessing.
+    Read-only and guarded; it refuses ambiguous questions instead of guessing. Follow-ups refine
+    the previous answer.
   </p>
 
   <form (submit)="submit(); $event.preventDefault()">
-    <input [(ngModel)]="question" name="q" placeholder="e.g. total paid revenue by customer" autocomplete="off" />
+    <input
+      [(ngModel)]="question"
+      name="q"
+      [placeholder]="turns.length ? 'Follow up — e.g. only the paid ones' : 'e.g. total paid revenue by customer'"
+      autocomplete="off"
+    />
     <button type="submit">Ask</button>
+    @if (turns.length) {
+      <button type="button" class="secondary" (click)="newConversation()">New conversation</button>
+    }
   </form>
 
-  @if (state$ | async; as s) {
-    @if (s.loading) {
-      <p class="muted">Running…</p>
-    } @else if (s.error) {
-      <p class="err">Request failed: {{ s.error }}</p>
-    } @else if (s.result; as r) {
-      @if (!r.answered) {
+  @for (t of turns; track $index) {
+    <section class="turn">
+      <div class="turn-q">{{ t.question }}</div>
+
+      @if (!t.result.answered) {
         <div class="card refuse">
-          <strong>{{ r.refused === 'ambiguous' ? 'Needs clarification' : 'Could not answer' }}</strong>
-          <p>{{ r.message }}</p>
+          <strong>{{ t.result.refused === 'ambiguous' ? 'Needs clarification' : 'Could not answer' }}</strong>
+          <p>{{ t.result.message }}</p>
         </div>
-      } @else if (r.result; as res) {
-        @switch (s.chart.kind) {
+      } @else if (t.result.result; as res) {
+        @switch (t.chart.kind) {
           @case ('stat') {
             <div class="card stat">
-              <div class="stat-value">{{ s.chart.display }}</div>
-              <div class="stat-label">{{ s.chart.label }}</div>
+              <div class="stat-value">{{ t.chart.display }}</div>
+              <div class="stat-label">{{ t.chart.label }}</div>
             </div>
           }
           @case ('line') {
             <div class="card chart">
               <svg
                 class="line-chart"
-                [attr.viewBox]="'0 0 ' + s.chart.width + ' ' + s.chart.height"
+                [attr.viewBox]="'0 0 ' + t.chart.width + ' ' + t.chart.height"
                 role="img"
-                [attr.aria-label]="'Line chart, ' + s.chart.xFirst + ' to ' + s.chart.xLast"
+                [attr.aria-label]="'Line chart, ' + t.chart.xFirst + ' to ' + t.chart.xLast"
               >
-                <line class="grid" [attr.x1]="s.chart.padL" [attr.y1]="s.chart.topY"
-                      [attr.x2]="s.chart.width - s.chart.padR" [attr.y2]="s.chart.topY" />
-                <line class="grid" [attr.x1]="s.chart.padL" [attr.y1]="s.chart.baselineY"
-                      [attr.x2]="s.chart.width - s.chart.padR" [attr.y2]="s.chart.baselineY" />
-                <path class="series" [attr.d]="s.chart.path" />
-                @for (p of s.chart.points; track p.label) {
+                <line class="grid" [attr.x1]="t.chart.padL" [attr.y1]="t.chart.topY"
+                      [attr.x2]="t.chart.width - t.chart.padR" [attr.y2]="t.chart.topY" />
+                <line class="grid" [attr.x1]="t.chart.padL" [attr.y1]="t.chart.baselineY"
+                      [attr.x2]="t.chart.width - t.chart.padR" [attr.y2]="t.chart.baselineY" />
+                <path class="series" [attr.d]="t.chart.path" />
+                @for (p of t.chart.points; track p.label) {
                   <circle class="pt" [attr.cx]="p.x" [attr.cy]="p.y" r="4">
                     <title>{{ p.label }}: {{ p.display }}</title>
                   </circle>
@@ -51,16 +58,16 @@
                           [attr.text-anchor]="p.anchor">{{ p.display }}</text>
                   }
                 }
-                <text class="axis" [attr.x]="s.chart.padL" [attr.y]="s.chart.height - 6"
-                      text-anchor="start">{{ s.chart.xFirst }}</text>
-                <text class="axis" [attr.x]="s.chart.width - s.chart.padR" [attr.y]="s.chart.height - 6"
-                      text-anchor="end">{{ s.chart.xLast }}</text>
+                <text class="axis" [attr.x]="t.chart.padL" [attr.y]="t.chart.height - 6"
+                      text-anchor="start">{{ t.chart.xFirst }}</text>
+                <text class="axis" [attr.x]="t.chart.width - t.chart.padR" [attr.y]="t.chart.height - 6"
+                      text-anchor="end">{{ t.chart.xLast }}</text>
               </svg>
             </div>
           }
           @case ('bar') {
             <div class="card chart">
-              @for (d of s.chart.bars; track d.label) {
+              @for (d of t.chart.bars; track d.label) {
                 <div class="bar-row">
                   <span class="bar-label" title="{{ d.label }}">{{ d.label }}</span>
                   <span class="bar" [style.width.%]="d.pct" title="{{ d.label }}: {{ d.display }}"></span>
@@ -86,9 +93,17 @@
 
         <div class="card">
           <div class="card-title">SQL that ran</div>
-          <pre>{{ r.sql }}</pre>
+          <pre>{{ t.result.sql }}</pre>
         </div>
       }
+    </section>
+  }
+
+  @if (state$ | async; as s) {
+    @if (s.loading) {
+      <p class="muted">Running…</p>
+    } @else if (s.error) {
+      <p class="err">Request failed: {{ s.error }}</p>
     }
   }
 </main>

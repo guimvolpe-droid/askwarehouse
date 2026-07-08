@@ -12,8 +12,22 @@ export interface SqlExecutor {
   execute(sql: string): Promise<QueryResult>;
 }
 
+// One answered turn of a conversation: the question and the guarded SQL that actually ran.
+// Multi-turn context is these pairs, carried by the client — the Worker stays stateless.
+export interface Turn {
+  question: string;
+  sql: string;
+}
+
+export interface ProposeInput {
+  schema: string;
+  question: string;
+  priorError?: string;
+  history?: Turn[];
+}
+
 export interface SqlModel {
   // Returns a SQL string, or an ambiguity line starting with "AMBIGUOUS:" when the
   // question can't be answered unambiguously from the schema.
-  propose(input: { schema: string; question: string; priorError?: string }): Promise<string>;
+  propose(input: ProposeInput): Promise<string>;
 }

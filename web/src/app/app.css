@@ -60,6 +60,55 @@ button {
 
 .refuse strong { display: block; margin-bottom: 4px; }
 
+.stat .stat-value {
+  font-size: 40px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.stat .stat-label {
+  color: #555;
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.line-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.line-chart .grid {
+  stroke: #eee;
+  stroke-width: 1;
+}
+
+.line-chart .series {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.line-chart .pt {
+  fill: #2563eb;
+  stroke: #fff;
+  stroke-width: 2; /* surface ring so overlapping/adjacent points stay separable */
+}
+
+.line-chart .pt-label,
+.line-chart .axis {
+  font-size: 12px;
+  fill: #444; /* text wears text color, not the series color */
+  font-variant-numeric: tabular-nums;
+}
+
+.line-chart .axis {
+  fill: #888;
+}
+
 .chart .bar-row {
   display: grid;
   grid-template-columns: 120px 1fr auto;

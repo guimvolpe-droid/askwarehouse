@@ -22,16 +22,53 @@
           <p>{{ r.message }}</p>
         </div>
       } @else if (r.result; as res) {
-        @if (chart(r).length) {
-          <div class="card chart">
-            @for (d of chart(r); track d.label) {
-              <div class="bar-row">
-                <span class="bar-label" title="{{ d.label }}">{{ d.label }}</span>
-                <span class="bar" [style.width.%]="d.pct"></span>
-                <span class="bar-val">{{ d.value }}</span>
-              </div>
-            }
-          </div>
+        @switch (s.chart.kind) {
+          @case ('stat') {
+            <div class="card stat">
+              <div class="stat-value">{{ s.chart.display }}</div>
+              <div class="stat-label">{{ s.chart.label }}</div>
+            </div>
+          }
+          @case ('line') {
+            <div class="card chart">
+              <svg
+                class="line-chart"
+                [attr.viewBox]="'0 0 ' + s.chart.width + ' ' + s.chart.height"
+                role="img"
+                [attr.aria-label]="'Line chart, ' + s.chart.xFirst + ' to ' + s.chart.xLast"
+              >
+                <line class="grid" [attr.x1]="s.chart.padL" [attr.y1]="s.chart.topY"
+                      [attr.x2]="s.chart.width - s.chart.padR" [attr.y2]="s.chart.topY" />
+                <line class="grid" [attr.x1]="s.chart.padL" [attr.y1]="s.chart.baselineY"
+                      [attr.x2]="s.chart.width - s.chart.padR" [attr.y2]="s.chart.baselineY" />
+                <path class="series" [attr.d]="s.chart.path" />
+                @for (p of s.chart.points; track p.label) {
+                  <circle class="pt" [attr.cx]="p.x" [attr.cy]="p.y" r="4">
+                    <title>{{ p.label }}: {{ p.display }}</title>
+                  </circle>
+                  @if (p.labelled) {
+                    <text class="pt-label" [attr.x]="p.x" [attr.y]="p.y - 10"
+                          [attr.text-anchor]="p.anchor">{{ p.display }}</text>
+                  }
+                }
+                <text class="axis" [attr.x]="s.chart.padL" [attr.y]="s.chart.height - 6"
+                      text-anchor="start">{{ s.chart.xFirst }}</text>
+                <text class="axis" [attr.x]="s.chart.width - s.chart.padR" [attr.y]="s.chart.height - 6"
+                      text-anchor="end">{{ s.chart.xLast }}</text>
+              </svg>
+            </div>
+          }
+          @case ('bar') {
+            <div class="card chart">
+              @for (d of s.chart.bars; track d.label) {
+                <div class="bar-row">
+                  <span class="bar-label" title="{{ d.label }}">{{ d.label }}</span>
+                  <span class="bar" [style.width.%]="d.pct" title="{{ d.label }}: {{ d.display }}"></span>
+                  <span class="bar-val">{{ d.display }}</span>
+                </div>
+              }
+            </div>
+          }
         }
 
         <div class="card">

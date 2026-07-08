@@ -4,18 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { Observable, Subject, of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { ApiService, AskResult } from './api.service';
+import { buildChart, type ChartModel } from './chart';
 
 interface ViewState {
   loading: boolean;
   result?: AskResult;
   error?: string;
+  chart: ChartModel;
 }
 
-interface Bar {
-  label: string;
-  value: number;
-  pct: number;
-}
+const NO_CHART: ChartModel = { kind: 'none' };
 
 @Component({
   selector: 'app-root',
@@ -28,16 +26,26 @@ export class App {
 
   private readonly ask$ = new Subject<string>();
 
-  // RxJS: each submitted question maps to an HTTP call, surfaced as a loading -> result/error stream.
+  // RxJS: each submitted question maps to an HTTP call, surfaced as a loading -> result/error
+  // stream. The chart model is picked by result shape (stat/line/bar/none) as the result lands.
   readonly state$: Observable<ViewState> = this.ask$.pipe(
     switchMap((q) =>
       this.api.ask(q).pipe(
-        map((result): ViewState => ({ loading: false, result })),
-        catchError((e): Observable<ViewState> => of({ loading: false, error: String(e?.message ?? e) })),
-        startWith<ViewState>({ loading: true }),
+        map(
+          (result): ViewState => ({
+            loading: false,
+            result,
+            chart: result.answered && result.result ? buildChart(result.result) : NO_CHART,
+          }),
+        ),
+        catchError(
+          (e): Observable<ViewState> =>
+            of({ loading: false, error: String(e?.message ?? e), chart: NO_CHART }),
+        ),
+        startWith<ViewState>({ loading: true, chart: NO_CHART }),
       ),
     ),
-    startWith<ViewState>({ loading: false }),
+    startWith<ViewState>({ loading: false, chart: NO_CHART }),
   );
 
   constructor(private readonly api: ApiService) {}
@@ -45,17 +53,5 @@ export class App {
   submit(): void {
     const q = this.question.trim();
     if (q) this.ask$.next(q);
-  }
-
-  // Build a simple bar-chart model from the first two columns (label, value) of the result.
-  chart(result: AskResult): Bar[] {
-    const r = result.result;
-    if (!r || r.columns.length < 2) return [];
-    const values = r.rows.map((row) => Number(row[1])).filter((n) => !Number.isNaN(n));
-    if (values.length === 0) return [];
-    const max = Math.max(1, ...values);
-    return r.rows
-      .map((row): Bar => ({ label: String(row[0]), value: Number(row[1]), pct: (Number(row[1]) / max) * 100 }))
-      .filter((b) => !Number.isNaN(b.value));
   }
 }

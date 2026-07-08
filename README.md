@@ -44,8 +44,9 @@ Honest, incremental build. What runs today vs. what's next:
 | Execution-accuracy eval (golden set: answers when possible, refuses ambiguity) | ✅ tested |
 | Worker (Hono): `POST /ask`, `GET /schema`, CORS | ✅ builds (`wrangler --dry-run`) |
 | Angular + RxJS dashboard — answer + chart + the exact SQL (`web/`) | ✅ builds (AOT) |
+| Chart by result shape — stat tile · line (time series) · bars · table-only | ✅ unit-tested (pure model) |
 | Live deploy (D1 + Claude Sonnet) + Loom | 🔜 next¹ |
-| More chart types · multi-turn query refinement | 🔜 next |
+| Multi-turn query refinement | 🔜 next |
 
 ¹ Deploy needs a Cloudflare account + `ANTHROPIC_API_KEY` (the owner's budget gate). Demos use a synthetic
 warehouse; the eval reports where it errs — anti-hype.

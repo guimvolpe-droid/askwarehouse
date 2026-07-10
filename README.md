@@ -3,6 +3,8 @@
 **Ask your database in plain English — get the answer, a chart, and the *exact SQL* it ran.** Read-only
 and guarded; it refuses ambiguous questions instead of guessing.
 
+![The AskWarehouse dashboard over the synthetic demo warehouse — answer, chart, result table and the exact SQL that ran](docs/assets/dashboard.png)
+
 A **Cloudflare Worker** (Hono + D1 + Claude) turns a question into a single read-only SQL query behind a
 security guard, with a self-correcting loop; an **Angular + RxJS** dashboard (`web/`) shows the answer, a
 chart, and the query. The one load-bearing decision — *the guard, not the model, decides what runs* — is in
@@ -64,6 +66,8 @@ npx wrangler deploy --dry-run --outdir dist   # bundles the Worker + validates t
 cd web && npm install && npm run build        # AOT build of the Angular dashboard
 # npm start  → ng serve on http://localhost:4200 (talks to the Worker on :8787)
 ```
+
+![npm test — 25 tests passing offline: guard, loop, sandbox, chart model, multi-turn, eval](docs/assets/tests-passing.png)
 
 ## Deploy (when the budget gate opens)
 

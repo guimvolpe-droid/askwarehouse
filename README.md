@@ -5,6 +5,8 @@ The service is read-only and guarded. It refuses ambiguous questions instead of 
 
 ![The AskWarehouse dashboard over the synthetic demo warehouse: answer, chart, result table and the exact SQL that ran](docs/assets/dashboard.png)
 
+Your team asks in plain English and always sees the exact SQL, and nothing can write to the database.
+
 A **Cloudflare Worker** (Hono + D1 + Claude) turns a question into a single read-only SQL query. The
 query passes through a security guard and a self-correcting loop before it runs. An **Angular + RxJS**
 dashboard (`web/`) shows the answer, a chart, and the query. The one load-bearing decision is that the
@@ -51,8 +53,8 @@ What runs today and what comes next:
 | Multi-turn refinement: client-carried `{question, sql}` history, guard re-vets every turn | ✅ tested ([ADR 0002](docs/adr/0002-stateless-multiturn.md)) |
 | Live deploy (D1 + Claude Sonnet) + Loom | 🔜 next¹ |
 
-¹ Deploy needs a Cloudflare account and an `ANTHROPIC_API_KEY` (the owner's budget gate). Demos use a
-synthetic warehouse. The eval reports where it errs.
+¹ Deploy needs a Cloudflare account and an `ANTHROPIC_API_KEY`. A live deploy is planned but not up
+yet. Demos use a synthetic warehouse. The eval reports where it errs.
 
 ## Develop & verify (no account needed)
 
@@ -70,7 +72,7 @@ cd web && npm install && npm run build        # AOT build of the Angular dashboa
 
 ![npm test: 25 tests passing offline (guard, loop, sandbox, chart model, multi-turn, eval)](docs/assets/tests-passing.png)
 
-## Deploy (when the budget gate opens)
+## Deploy (planned, not live yet)
 
 ```bash
 wrangler d1 create askwarehouse                # paste the id into wrangler.jsonc
